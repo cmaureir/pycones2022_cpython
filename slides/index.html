@@ -1,0 +1,758 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <title>Aprendiendo sobre el núcleo de Python rompiéndolo todo: un tour gentil y en español</title>
+
+  <link rel="stylesheet" href="dist/reset.css">
+  <link rel="stylesheet" href="dist/reveal.css">
+  <link rel="stylesheet" href="css/self-theme.css" id="theme">
+  <link rel="stylesheet" href="css/self.css" id="theme">
+  <link rel="stylesheet" href="css/extras.css">
+
+  <!-- Theme used for syntax highlighted code -->
+  <link rel="stylesheet" href="plugin/highlight/monokai.css">
+
+  <!-- Printing and PDF exports -->
+  <script>
+  if( window.location.search.match( /print-pdf/gi ) ) {
+    var link = document.createElement( 'link' );
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = 'css/print/pdf.css';
+    document.getElementsByTagName( 'head' )[0].appendChild( link );
+  }
+  </script>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+      <!--***************************************************************************-->
+      <section>
+        <div id="left70">
+        <h2 style="font-size: 1.1em;">Aprendiendo sobre el núcleo de Python rompiéndolo todo:</h2>
+        <h3 style="font-size: 1em;"><i class="verde">un tour gentil y en español</i></h3>
+        <p style="font-size: 80%;margin-top: 10%;">
+          Dr. <i class="ep-red">Cristián</i> Maureira-Fredes<br/>
+        </p>
+        <p style="font-size: 60%">
+          Generando Bugs en  <img class="plain" src="img/qt.png" style="height: 50px; vertical-align: middle; background: rgba(0, 0, 0, 0);">
+          <br/>
+          @cmaureir<br/>
+          <img class="plain" src="img/twitter.png" style="background: rgba(0,0,0,0);height: 40px;">
+          <img class="plain" src="img/github_white.png"  style="background: rgba(0,0,0,0);height: 40px;">
+          <img class="plain" src="img/linkedin.png"  style="background: rgba(0,0,0,0);height: 40px;"><br/>
+        </p>
+        </div>
+        <div id="right30">
+          <img style="margin-top: 80%; height: 200px;" src="img/python.svg" />
+        </div>
+      </section>
+      <!--***************************************************************************-->
+
+      <section>
+        <h3>¿Por qué? 🤔</h3>
+        <div id="leftc">
+          <img style="height: 200px;" src="img/motor.jpg" />
+        </div>
+        <div id="rightc">
+          <img class="fragment" style="height: 200px;" src="img/qt.png" />
+        </div>
+      </section>
+
+      <section>
+        <h3>¿Desde cero?</h3>
+    <pre style="font-size: 60%;width: 90%;"><code class="python" data-trim data-noescape>
+        HOW TO PRINT CELSIUS FROM a TO b:
+           PUT a, b IN lo, hi
+           IF lo > hi:
+              PUT hi, lo IN lo, hi \Swap hi and lo
+           FOR f IN {lo..hi}:
+              PUT (f-32)*5/9 IN c
+              WRITE f, "Fahrenheit =", 2 round c, "Celsius" /
+        </code></pre>
+    <pre class="fragment fade-in" data-fragment-index="1" style="font-size: 50%;width: 90%;"><code class="python" data-trim data-noescape>
+        PRINT CELSIUS FROM 40 TO 45
+        > 40 Fahrenheit = 4.44 Celsius
+        > 41 Fahrenheit = 5.00 Celsius
+        > 42 Fahrenheit = 5.56 Celsius
+        > 43 Fahrenheit = 6.11 Celsius
+        > 44 Fahrenheit = 6.67 Celsius
+        > 45 Fahrenheit = 7.22 Celsius
+        </code></pre>
+      </section>
+
+      <section data-transition="slide-in fade-out">
+        <h3>¿Python?</h3>
+        <img style="width: 90%;" src="img/interpreters1.png" />
+      </section>
+
+      <section data-transition="fade-in slide-out">
+        <h3>¿Python?</h3>
+        <img style="width: 90%;" src="img/interpreters2.png" />
+      </section>
+
+      <section>
+        <h3>La estructura del repositorio <i class="ep-red">CPython</i></h3>
+        <p><a href="https://github.com/python/cpython">github.com/python/cpython</a></p>
+        <ul>
+            <li class="fragment fade-in" data-fragment-index="1"><i class="blue-light">Doc</i> - documentación oficial</li>
+            <li class="fragment fade-in" data-fragment-index="2"><i class="blue-light">Include</i> - archivos de cabecera del intérprete</li>
+            <li class="fragment fade-in" data-fragment-index="3"><i class="blue-light">Grammar</i> - Gramática PEG (PEP 617)</li>
+            <li class="fragment fade-in" data-fragment-index="4"><i class="blue-light">Lib</i> - stdlib en Python puro</li>
+            <li class="fragment fade-in" data-fragment-index="5"><i class="blue-light">Modules</i> - stdlib en C</li>
+            <li class="fragment fade-in" data-fragment-index="6"><i class="blue-light">Objects</i> - Tipos incorporados</li>
+            <li class="fragment fade-in" data-fragment-index="7"><i class="blue-light">Python</i> - Tiempo de ejecución CPython</li>
+        </ul>
+      </section>
+
+
+      <section>
+        <h3>Construyendo tu propio Python</h3>
+        <ul style="font-size: 80%;">
+          <li class="fragment">Clona el repositorio
+        <pre class="fragment fade-in" data-fragment-index="1"style="font-size: 60%;width: 90%;"><code class="bash" data-trim data-noescape>
+        git clone https://github.com/python/cpython.git
+        </code></pre></li>
+          <li class="fragment">Configura el proyecto
+        <pre class="fragment fade-in" data-fragment-index="1"style="font-size: 60%;width: 90%;"><code class="bash" data-trim data-noescape>
+        # Puedes seleccionar un directorio de 'build' e 'install'
+        cd cpython/
+        ./configure
+        </code></pre>
+          </li>
+          <li class="fragment">Compila, y a disfrutar!
+        <pre class="fragment fade-in" data-fragment-index="1"style="font-size: 60%;width: 90%;"><code class="bash" data-trim data-noescape>
+        # Para 'X' procesos
+        make -j X
+        ./python
+        Python 3.12.0a0 (Oct 1 2022, 22:56:41) [GCC 12.2.0] on linux
+        Type "help", "copyright", "credits" or "license" for more information.
+        >>> print("yay!")
+        yay!
+        </code></pre>
+      </section>
+
+
+      <section data-transition="fade-in slide-out">
+        <h3>¿Qué pasa dentro?</h3>
+        <img style="width: 60%;" src="img/hello.png" />
+      </section>
+
+      <section data-transition="fade-in slide-out">
+        <img style="width: 60%;" src="img/dive.gif" />
+      </section>
+
+      <!-- mirar Python/bltin print -->
+      <!-- broma listas -->
+
+      <section data-transition="fade-in slide-out">
+        <h3>Volvamos a la teoría</h3>
+
+        <img style="width: 80%;" src="img/proceso.png" />
+      </section>
+
+  <section>
+    <h3><i class="yellow-light">D</i>ecoding (1/5)</h3>
+    <p>Bytes a texto</p>
+
+    <pre class="fragment fade-in" data-fragment-index="1" style="font-size: 50%;width: 90%;"><code class="python" data-trim data-noescape>
+    # -*- coding: latin-1 -*-
+    </code></pre>
+    <pre class="fragment fade-in" data-fragment-index="1" style="font-size: 50%;width: 90%;"><code class="python" data-trim data-noescape>
+    # This Python file uses the following encoding: utf-8
+    </code></pre>
+    <pre class="fragment fade-in" data-fragment-index="1" style="font-size: 50%;width: 90%;"><code class="python" data-trim data-noescape>
+    # coding: ascii
+    </code></pre>
+    <ul style="font-size: 80%;">
+        <li class="fragment fade-in" data-fragment-index="1"><i class="blue-light">PEP 263</i> - Defining Python Source Code Encodings</li>
+        <li class="fragment fade-in" data-fragment-index="2"><i class="blue-light">PEP 3120</i> - Using UTF-8 as the default source encoding</li>
+        <li class="fragment fade-in" data-fragment-index="3"><i class="blue-light">PEP 3131</i> - Supporting Non-ASCII Identifiers</li>
+    </ul>
+  </section>
+
+  <section>
+    <h3><i class="yellow-light">T</i>okenizing (2/5)</h3>
+    <p>Texto a palabras</p>
+    <pre class="fragment fade-in" data-fragment-index="1" style="font-size: 50%;width: 90%;"><code class="python" data-trim data-noescape>
+    x = 40 + 2
+    </code></pre>
+    <pre class="fragment fade-in" data-fragment-index="2" style="font-size: 50%;width: 90%;"><code class="python" data-trim data-noescape>
+    'x' '=' '40' '+' '2'
+    </code></pre>
+
+    <pre class="fragment fade-in" data-fragment-index="3" style="font-size: 50%;width: 90%;"><code class="python" data-trim data-noescape>
+    % python -m tokenize
+    x = 40 + 2
+    1,0-1,1:            NAME           'x'
+    1,2-1,3:            OP             '='
+    1,4-1,6:            NUMBER         '40'
+    1,7-1,8:            OP             '+'
+    1,9-1,10:           NUMBER         '2'
+    1,10-1,11:          NEWLINE        '\n'
+    </code></pre>
+    <p class="fragment fade-in" data-fragment-index="3">
+        <a href="https://docs.python.org/3.10/library/tokenize.html">docs.python.org/3.10/library/tokenize.html</a>
+    </p>
+  </section>
+
+  <section>
+    <h3><i class="yellow-light">P</i>arsing (3/5)</h3>
+    <p>Palabras a semántica</p>
+    <ul style="font-size: 80%;">
+      <li class="fragment fade-in" data-fragment-index="1">Gramática - <a style="font-size: 70%;" href="https://docs.python.org/3.10/reference/grammar.html">docs.python.org/3.10/reference/grammar.html</a></li>
+      <li class="fragment fade-in" data-fragment-index="2">EBNF y PEG
+        <ul style="font-size: 60%;">
+          <li><a style="font-size: 70%;" href="https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form">en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form</a></li>
+          <li><a style="font-size: 70%;" href="https://en.wikipedia.org/wiki/Parsing_expression_grammar">en.wikipedia.org/wiki/Parsing_expression_grammar</a></li>
+        </ul>
+      </li>
+    </ul>
+    <pre class="fragment fade-in" data-fragment-index="3" style="font-size: 40%;width: 90%;"><code class="python fragment fade-in" data-fragment-index="3" data-trim data-noescape>
+    import_stmt: import_name | import_from
+    import_name: 'import' dotted_as_names
+    # note below: the ('.' | '...') is necessary because '...' is tokenized as ELLIPSIS
+    import_from:
+        | 'from' ('.' | '...')* dotted_name 'import' import_from_targets
+        | 'from' ('.' | '...')+ 'import' import_from_targets
+    import_from_targets:
+        | '(' import_from_as_names [','] ')'
+        | import_from_as_names !','
+        | '*'
+    ...
+    </code></pre>
+    <ul style="font-size: 60%;" class="fragment fade-in" data-fragment-index="4">
+        <li><a href="https://docs.python.org/3.10/library/symbol.html">docs.python.org/3.10/library/symbol.html</a></li>
+        <li><a href="https://docs.python.org/3.10/library/token.html">docs.python.org/3.10/library/token.html</a></li>
+        <li><a href="https://docs.python.org/3.10/library/parser.html">docs.python.org/3.10/library/parser.html</a></li>
+    </ul>
+  </section>
+
+  <section>
+    <h3><i class="yellow-light">A</i>bstract Syntax Tree (AST) (4/5)</h3>
+    <p>Estructura semántica</p>
+    <ul style="font-size: 80%;" class="fragment fade-in" data-fragment-index="1">
+        <li>Zephyr ASDL - <a href="https://devguide.python.org/compiler/">devguide.python.org/compiler/</a><br/>
+        <q style="font-size: 50%;">Daniel C. Wang, Andrew W. Appel, Jeff L. Korn, and Chris S. Serra. <b>The Zephyr Abstract Syntax Description Language</b>. In Proceedings of the Conference on Domain-Specific Languages, pp. 213–227, 1997.</q></li>
+    </ul>
+    <pre class="fragment fade-in" data-fragment-index="2" style="font-size: 50%;width: 90%;"><code class="python fragment fade-in" data-fragment-index="2"data-trim data-noescape>
+    import ast
+    t = ast.parse("a = 40 + 2")
+    ast.dump(t)
+    # Module(body=[Assign(targets=[Name(id='a', ctx=Store())],
+    #     value=BinOp(left=Constant(value=40, kind=None),
+    #                 op=Add(),
+    #                 right=Constant(value=2, kind=None)),
+    #     type_comment=None)],
+    #   type_ignores=[])
+
+    </code></pre>
+    <p class="fragment fade-in" data-fragment-index="2">
+        <a href="https://docs.python.org/3.10/library/ast.html">docs.python.org/3.10/library/ast.html</a>
+    </p>
+  </section>
+  <section>
+    <h3><i class="yellow-light">A</i>bstract Syntax Tree (AST)</h3>
+    <img width="70%;" src="img/ast.png" />
+  </section>
+
+  <section>
+    <h3><i class="yellow-light">C</i>ompiling (5/5)</h3>
+    <p>Bytecode a la VM</p>
+    <div id="left">
+        <ul style="font-size: 80%;" class="fragment fade-in" data-fragment-index="1">
+            <li>Depende de la Máquina Virtual de CPython</li>
+            <li>Basado en stack</li>
+        </ul>
+        <pre class="fragment fade-in" data-fragment-index="2" style="font-size: 50%;width: 90%;"><code class="python" data-trim data-noescape>
+        def f():
+            a = 2
+            b = 40
+            return a + b
+        from dis import dis
+        dis(f)
+        </code></pre>
+    </div>
+    <div id="right">
+        <pre class="fragment fade-in" data-fragment-index="3" style="font-size: 50%;width: 90%;"><code class="bash" data-trim data-noescape>
+1     0 RESUME           0
+
+2     2 LOAD_CONST       1 (40)
+      4 STORE_FAST       0 (a)
+
+3     6 LOAD_CONST       2 (2)
+      8 STORE_FAST       1 (b)
+
+4    10 LOAD_FAST        0 (a)
+     12 LOAD_FAST        1 (b)
+     14 BINARY_OP        0 (+)
+     18 RETURN_VALUE
+        </code></pre>
+    </div>
+    <div style="position: absolute; margin-top: 30%;">
+    <p class="fragment fade-in" data-fragment-index="3" style="text-align: center; font-size: 80%;">
+        <a href="https://docs.python.org/3.10/library/dis.html">docs.python.org/3.10/library/dis.html</a>
+    </p>
+    </div>
+  </section>
+
+  <section data-transition="fade-in slide-out">
+    <h3>¿Por qué vine a esta charla?</h3>
+    <img style="width: 40%;" src="img/anxiety.gif" />
+  </section>
+
+  <section>
+    <h3>¡Espera! ahora sí</h3>
+    <img style="width: 40%;" src="img/meh.gif" />
+  </section>
+
+  <section>
+    <h4>¿Qué <i class="green">más</i> podemos hacer si...</h4>
+    <p>🤔</p>
+  </section>
+
+  <section>
+    <h4>...ya aprendimos <i class="yellow">cómo funciona</i> Python...</h4>
+    <p>😰</p>
+  </section>
+
+  <section>
+    <h4>...tenemos <i class="green">comunidades</i> geniales en español...</h4>
+    <p>🤩</p>
+    <img style="width: 150px;" src="img/comunidad_pyes.png" />
+    <img style="width: 150px;" src="img/comunidad_pythonnorte.png" />
+    <img style="width: 150px;" src="img/comunidad_pyar.png" />
+    <img style="width: 150px;" src="img/comunidad_pylatam.png" />
+    <img style="width: 150px;" src="img/pythonchile_logo.png" />
+    <img style="width: 150px;" src="img/hablemospython_logo.png" />
+    <br/>
+    ¡Y muchas más!
+  </section>
+
+  <section>
+    <div id="left">
+      <img style="width: 100px;" src="img/python_docs_es.png" /><br/>
+      <h4>...tenemos la documentación en español...</h4>
+      <p style="font-size: 70%;">
+      <a href="https://docs.python.org/es/3/">https://docs.python.org/es/3/</a>
+      </p>
+      <p style="font-size: 70%;margin-top: 150px;">
+        ¡Súmate al equipo!<br/>
+      <a href="https://python-docs-es.readthedocs.io/es/3.10/CONTRIBUTING.html">python-docs-es.readthedocs.io</a>
+      </p>
+    </div>
+    <div id="right">
+      <img src="img/python_docs_es_members.jpg" />
+    </div>
+  </section>
+
+  <section>
+    <h3>...?</h3>
+  </section>
+
+  <!-- mostrar python en español -->
+
+  <section>
+    <h3>¿Qué acaba de pasar?</h3>
+    <img style="font-size: 40%;" src="img/what.gif" />
+  </section>
+
+  <section>
+    <h4><i class="green">Necesitamos</i></h4>
+    <h2>un poco de C</h2>
+    <img style="width: 100px;" src="img/c.png"/>
+  </section>
+
+      <section data-transition="slide-in fade-out">
+        <h3>Python y C</h3>
+        <div id="left">
+          <pre class="fragment fade-in" data-fragment-index="1"style="font-size: 40%;width: 90%;"><code class="python" data-trim data-noescape>
+          <span class="fragment" data-fragment-index="1"># Un comentario</span>
+          <span class="fragment" data-fragment-index="2">import mi_modulo</span>
+
+          <span class="fragment" data-fragment-index="3">def suma(a, b):</span>
+          <span class="fragment" data-fragment-index="3">    return a + b</span>
+
+
+          <span class="fragment" data-fragment-index="4">def main():</span>
+          <span class="fragment" data-fragment-index="5">    msg = "hola mundo"</span>
+          <span class="fragment" data-fragment-index="5">    x = 3</span>
+          <span class="fragment" data-fragment-index="5">    y = 0.14</span>
+          <span class="fragment" data-fragment-index="6">    z = suma(x, y)</span>
+          <span class="fragment" data-fragment-index="6">    print("%f" % z)</span>
+
+          <span class="fragment" data-fragment-index="4">if __name__ == "__main__":</span>
+          <span class="fragment" data-fragment-index="4">    main()</span>
+          </code></pre>
+        </div>
+        <div id="right">
+          <pre class="fragment fade-in" data-fragment-index="1"style="font-size: 40%;width: 90%;"><code class="c" data-trim data-noescape>
+          <span class="fragment" data-fragment-index="1">// Un comentario</span>
+          <span class="fragment" data-fragment-index="2">#include &lt;mi_modulo.h&gt;</span>
+
+          <span class="fragment" data-fragment-index="3">float suma(int a, float b) {</span>
+          <span class="fragment" data-fragment-index="3">    return a + b;</span>
+          <span class="fragment" data-fragment-index="3">}</span>
+
+          <span class="fragment" data-fragment-index="4">int main(){</span>
+          <span class="fragment" data-fragment-index="5">    char msg[] = "hola mundo";</span>
+          <span class="fragment" data-fragment-index="5">    int x = 3;</span>
+          <span class="fragment" data-fragment-index="5">    float y = 0.14;</span>
+          <span class="fragment" data-fragment-index="6">    float z = suma(x, y);</span>
+          <span class="fragment" data-fragment-index="6">    printf("%f", z)</span>
+
+          <span class="fragment" data-fragment-index="4">    return 0;</span>
+          <span class="fragment" data-fragment-index="4">}</span>
+
+          </code></pre>
+        </div>
+      </section>
+
+      <section data-transition="fade-in slide-out">
+        <h3>Python y C <i class="ep-red">(+anotaciones de tipo)</i></h3>
+        <div id="left">
+          <pre style="font-size: 40%;width: 90%;"><code class="python" data-trim data-noescape>
+          <span># Un comentario</span>
+          <span>import mi_modulo</span>
+
+          <span>def suma(a: int, b: float) -&gt; float:</span>
+          <span>    return a + b</span>
+
+
+          <span>def main() -&gt; None:</span>
+          <span>    msg: str = "hola mundo"</span>
+          <span>    x: int = 3</span>
+          <span>    y: float = 0.14</span>
+          <span>    z: float = suma(x, y)</span>
+          <span>    print("%f" % z)</span>
+
+          <span>if __name__ == "__main__":</span>
+          <span>    main()</span>
+          </code></pre>
+        </div>
+        <div id="right">
+          <pre style="font-size: 40%;width: 90%;"><code class="c" data-trim data-noescape>
+          <span>// Un comentario</span>
+          <span>#include &lt;mi_modulo.h&gt;</span>
+
+          <span>float sum(int a, float b) {</span>
+          <span>    return a + b;</span>
+          <span>}</span>
+
+          <span>int main(){</span>
+          <span>    char msg[] = "hola mundo";</span>
+          <span>    int x = 3;</span>
+          <span>    float y = 0.14;</span>
+          <span>    float z = suma(x, y);</span>
+          <span>    printf("%f", z)</span>
+
+          <span>    return 0;</span>
+          <span>}</span>
+
+          </code></pre>
+        </div>
+      </section>
+
+      <section>
+        <h4>Python también puede ser <i class="red">complicado</i> 🥲</h4>
+
+        <div class="fragment">
+        <pre style="font-size: 100%;width: 90%;"><code class="python" data-trim data-noescape>
+        _="_=%r;print(_%%_)";print(_%_)
+        </code></pre>
+        </div>
+
+        <div class="fragment">
+        <pre style="font-size: 100%;width: 90%;"><code class="python" data-trim data-noescape>
+        # Para un número 'n'
+        n&amp;~-n&lt;1
+        </code></pre>
+        </div>
+      </section>
+
+
+
+      <section>
+        <h3>¿Qué es eso que se llama <i class="ep-red">PyObject</i>?</h3>
+      </section>
+
+  <section>
+    <h3>PyObject</h3>
+    <pre style="font-size: 70%;width: 80%;"><code class="c" data-trim data-noescape>
+typedef struct _object {
+    _PyObject_HEAD_EXTRA
+    Py_ssize_t ob_refcnt;
+    struct _typeobject *ob_type;  // ?
+} PyObject;
+    </code></pre>
+  </section>
+
+<section>
+    <div id="left">
+    <pre style="font-size: 20%;width: 90%;"><code class="c" data-trim data-noescape>
+typedef struct _typeobject {
+    PyObject_VAR_HEAD
+    const char *tp_name; /* For printing, in format "<module>.<name>" */
+    Py_ssize_t tp_basicsize, tp_itemsize; /* For allocation */
+
+    /* Methods to implement standard operations */
+
+    destructor tp_dealloc;
+    Py_ssize_t tp_vectorcall_offset;
+    getattrfunc tp_getattr;
+    setattrfunc tp_setattr;
+    PyAsyncMethods *tp_as_async; /* formerly known as tp_compare (Python 2)
+                                    or tp_reserved (Python 3) */
+    reprfunc tp_repr;
+
+    /* Method suites for standard classes */
+
+    PyNumberMethods *tp_as_number;
+    PySequenceMethods *tp_as_sequence;
+    PyMappingMethods *tp_as_mapping;
+
+    /* More standard operations (here for binary compatibility) */
+
+    hashfunc tp_hash;
+    ternaryfunc tp_call;
+    reprfunc tp_str;
+    getattrofunc tp_getattro;
+    setattrofunc tp_setattro;
+
+    /* Functions to access object as input/output buffer */
+    PyBufferProcs *tp_as_buffer;
+
+    /* Flags to define presence of optional/expanded features */
+    unsigned long tp_flags;
+
+    const char *tp_doc; /* Documentation string */
+
+    /* Assigned meaning in release 2.0 */
+    /* call function for all accessible objects */
+    traverseproc tp_traverse;
+
+    /* delete references to contained objects */
+    inquiry tp_clear;
+
+    /* Assigned meaning in release 2.1 */
+    /* rich comparisons */
+    richcmpfunc tp_richcompare;
+
+    /* weak reference enabler */
+    Py_ssize_t tp_weaklistoffset;
+
+    /* Iterators */
+    getiterfunc tp_iter;
+    iternextfunc tp_iternext;
+
+    </code></pre>
+    </div>
+    <div id="right">
+    <pre style="font-size: 20%;width: 90%;"><code class="c" data-trim data-noescape>
+    /* Attribute descriptor and subclassing stuff */
+    struct PyMethodDef *tp_methods;
+    struct PyMemberDef *tp_members;
+    struct PyGetSetDef *tp_getset;
+    struct _typeobject *tp_base;
+    PyObject *tp_dict;
+    descrgetfunc tp_descr_get;
+    descrsetfunc tp_descr_set;
+    Py_ssize_t tp_dictoffset;
+    initproc tp_init;
+    allocfunc tp_alloc;
+    newfunc tp_new;
+    freefunc tp_free; /* Low-level free-memory routine */
+    inquiry tp_is_gc; /* For PyObject_IS_GC */
+    PyObject *tp_bases;
+    PyObject *tp_mro; /* method resolution order */
+    PyObject *tp_cache;
+    PyObject *tp_subclasses;
+    PyObject *tp_weaklist;
+    destructor tp_del;
+
+    /* Type attribute cache version tag. Added in version 2.6 */
+    unsigned int tp_version_tag;
+
+    destructor tp_finalize;
+    vectorcallfunc tp_vectorcall;
+
+    /* bpo-37250: kept for backwards compatibility in CPython 3.8 only */
+    Py_DEPRECATED(3.8) int (*tp_print)(PyObject *, FILE *, int);
+
+#ifdef COUNT_ALLOCS
+    /* these must be last and never explicitly initialized */
+    Py_ssize_t tp_allocs;
+    Py_ssize_t tp_frees;
+    Py_ssize_t tp_maxalloc;
+    struct _typeobject *tp_prev;
+    struct _typeobject *tp_next;
+#endif
+} PyTypeObject;
+
+/* The *real* layout of a type object when allocated on the heap */
+typedef struct _heaptypeobject {
+    /* Note: there's a dependency on the order of these members
+       in slotptr() in typeobject.c . */
+    PyTypeObject ht_type;
+    PyAsyncMethods as_async;
+    PyNumberMethods as_number;
+    PyMappingMethods as_mapping;
+    PySequenceMethods as_sequence; /* as_sequence comes after as_mapping,
+                                      so that the mapping wins when both
+                                      the mapping and the sequence define
+                                      a given operator (e.g. __getitem__).
+                                      see add_operators() in typeobject.c . */
+    PyBufferProcs as_buffer;
+    PyObject *ht_name, *ht_slots, *ht_qualname;
+    struct _dictkeysobject *ht_cached_keys;
+    /* here are optional user slots, followed by the members. */
+} PyHeapTypeObject;
+    </code></pre>
+    </div>
+</section>
+
+
+  <section>
+    <h3><i class="red">No</i> tienes que aprenderlo todo</h3>
+    <h4 class="fragment">Piensa en <i class="ep-yellow">PyObject</i> como una <i class="ep-red">caja grande</i> 📦, que se puede llenar con lo que necesites</h4>
+  </section>
+
+  <section>
+    <h3>Para un <code class="ep-yellow">PyObject</code> <i class="ep-red">o</i> (1/2)</h3>
+    <ul>
+      <li>Si implementa <i class="ep-red">elementos numéricos</i> con <i class="ep-yellow">PyNumber_</i> tenemos acceso a la API en <a href="https://docs.python.org/3/c-api/number.html">docs.python.org/3/c-api/number.html</a></li>
+    </ul>
+    <pre style="font-size: 60%;width: 90%;"><code class="c" data-trim data-noescape>
+    PyNumber_Check(o)  // Verifica protocolos numéricos
+    PyNumber_Add(o1, o2) // Equivalente a o1 + o2
+
+    // Tambien para flotantes PyFloat_*
+    // y enteros largos PyLong_*
+    // ...
+    </code></pre>
+  </section>
+
+  <section>
+    <h3>Para un <code class="ep-yellow">PyObject</code> <i class="ep-red">o</i> (2/2)</h3>
+    <ul>
+      <li>Si implementa <i class="ep-red">elementos de secuencia</i> <i class="ep-yellow">PySequence_</i> tenemos acceso a la API en <a href="https://docs.python.org/3/c-api/sequence.html">docs.python.org/3/c-api/sequence.html</a></li>
+    </ul>
+    <pre style="font-size: 60%;width: 90%;"><code class="c" data-trim data-noescape>
+    PySequence_Check(o)  // Verifica protocolos secuencia
+    PySequence_GetItem(o, i) // Equivalente a o[i]
+
+    // Tambien para listas PyList_*
+    // y conjuntos PySet_*
+    // ...
+    </code></pre>
+  </section>
+
+  <section>
+    <h3>¿Nuevas Features? 😮</h3>
+  </section>
+
+  <!-- aquarion -->
+  <!-- weather -->
+  <!-- asereje -->
+  <!-- bizcochito -->
+
+  <!-- -->
+
+      <!-- grep through the code -->
+
+
+      <!--
+        s.add(),
+        s.add({1,2,3} -> problem it's update()
+        s.addanothersetplease()
+      -->
+
+      <section>
+        <h3>Hay <i class="ep-red">muchos otros</i> detalles que estudiar 😵</h3>
+        <ul>
+          <li class="fragment">Conteo de referencias 🧮</li>
+          <li class="fragment">Global Interpreter Lock (GIL) 🔒</li>
+          <li class="fragment">Creación de módulos y Tipos 🤖</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>Ahora que nos vamos<br/><i class="red">sin dudas</i> de la charla</h3>
+        <img width="30%;" src="img/suspense.gif" /><br/>
+      </section>
+
+      <section>
+        <h4 style="margin-top: 40px;"><i class="red">no tengas miedo</i></h4>
+        <h4 class="fragment">de <i class="ep-yellow">romperlo todo</i></h4>
+      </section>
+
+
+      <section>
+        <div id="left">
+        <h2 style="font-size: 1.1em;">Aprendiendo sobre el núcleo de Python rompiéndolo todo:</h2>
+        <h3 style="font-size: 1em;"><i class="verde">un tour gentil y en español</i></h3>
+        </div>
+        <div id="right">
+        <p style="font-size: 80%;margin-top: 10%;">
+          Dr. <i class="ep-red">Cristián</i> Maureira-Fredes<br/>
+        </p>
+        <p style="font-size: 90%">
+        <i class="ep-red">@cmaureir</i><br/>
+          <img class="plain" src="img/twitter.png" style="background: rgba(0,0,0,0);height: 40px;">
+          <img class="plain" src="img/github_white.png"  style="background: rgba(0,0,0,0);height: 40px;">
+          <img class="plain" src="img/linkedin.png"  style="background: rgba(0,0,0,0);height: 40px;"><br/>
+        </p>
+        <i class="yellow">¡Gracias!</i> 😃
+        </div>
+      </section>
+
+      <!--***************************************************************************-->
+    </div>
+  </div>
+
+  <script src="dist/reveal.js"></script>
+  <script src="plugin/notes/notes.js"></script>
+  <script src="plugin/markdown/markdown.js"></script>
+  <script src="plugin/highlight/highlight.js"></script>
+  <script>
+    // More info about initialization & config:
+    // - https://revealjs.com/initialization/
+    // - https://revealjs.com/config/
+    Reveal.initialize({
+      hash: true,
+      transitionSpeed: 'fast',
+
+      // Learn about plugins: https://revealjs.com/plugins/
+      plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+    });
+  </script>
+  <!-- Hack to have a footer-->
+
+  <!-- 1. Style header/footer <div> so they are positioned as desired: in css/qt.css -->
+  <!-- 2. Create hidden header/footer <div> -->
+  <div id="hidden" style="display:none;">
+    <div id="header">
+      <div id="header-left"></div>
+      <div id="header-right"><img src="img/logo3.png" width="150px" /></div>
+      <div id="footer-left"><p style="font-size: 22pt;margin-left: 20px;"><i class="verde">#PyConES2022</i> | @cmaureir
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+  <script type="text/javascript">
+    // 3. On Reveal.js ready event, copy header/footer <div> into each `.slide-background` <div>
+    var header = $('#header').html();
+    if ( window.location.search.match( /print-pdf/gi ) ) {
+      Reveal.addEventListener( 'ready', function( event ) {
+        $('.slide-background').append(header);
+      });
+    }
+    else {
+      $('div.reveal').append(header);
+     }
+  </script>
+</body>
+</html>
